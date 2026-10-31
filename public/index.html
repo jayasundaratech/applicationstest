@@ -3,18 +3,18 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Entra Identity Lab</title>
+  <title>Entra OIDC + SCIM Lab</title>
   <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
   <main class="shell">
     <header class="hero">
       <div>
-        <p class="eyebrow">Microsoft Entra ID Lab</p>
-        <h1>OIDC + SCIM Identity Test App</h1>
-        <p class="subtitle">Sign in with Entra ID using OpenID Connect, then watch Entra provisioning create and manage users through SCIM 2.0.</p>
+        <p class="eyebrow">Microsoft Entra Identity Lab</p>
+        <h1>OIDC + SCIM Enterprise Identity Demo</h1>
+        <p class="subtitle">This page shows the difference between authentication and provisioning, and how an application can use both together.</p>
       </div>
-      <div class="hero-actions" id="authActions">
+      <div id="authActions" class="hero-actions">
         <a class="button primary" href="/auth/login">Sign in with Entra ID</a>
       </div>
     </header>
@@ -22,67 +22,132 @@
     <section class="status-grid">
       <article class="card status-card">
         <span class="status-dot" id="oidcDot"></span>
-        <div><strong>OIDC</strong><span id="oidcStatus">Checking…</span></div>
+        <div><strong>OIDC</strong><span id="oidcStatus">Checking configuration…</span></div>
       </article>
       <article class="card status-card">
         <span class="status-dot" id="scimDot"></span>
-        <div><strong>SCIM</strong><span id="scimStatus">Checking…</span></div>
+        <div><strong>SCIM</strong><span id="scimStatus">Checking configuration…</span></div>
       </article>
       <article class="card status-card">
         <span class="status-dot neutral"></span>
-        <div><strong>App</strong><span>Online</span></div>
+        <div><strong>Function App</strong><span>Online</span></div>
+      </article>
+    </section>
+
+    <section class="concept-grid">
+      <article class="concept oidc-concept">
+        <div class="concept-number">1</div>
+        <div>
+          <p class="kicker">Authentication</p>
+          <h2>OIDC answers: Who are you?</h2>
+          <p>When a user signs in, Entra ID authenticates the user and returns identity claims to the application.</p>
+        </div>
+      </article>
+
+      <article class="concept scim-concept">
+        <div class="concept-number">2</div>
+        <div>
+          <p class="kicker">Provisioning</p>
+          <h2>SCIM answers: Should you exist here?</h2>
+          <p>Entra automatically creates, updates, and disables application users based on assignments and group membership.</p>
+        </div>
+      </article>
+
+      <article class="concept access-concept">
+        <div class="concept-number">3</div>
+        <div>
+          <p class="kicker">Application authorization</p>
+          <h2>Use both for access</h2>
+          <p>The demo checks whether the signed-in OIDC identity is also an active SCIM-provisioned user.</p>
+        </div>
       </article>
     </section>
 
     <section class="grid two-column">
-      <article class="card">
+      <article class="card main-card">
         <div class="card-heading">
           <div>
-            <p class="kicker">Interactive authentication</p>
-            <h2>OIDC session</h2>
+            <p class="kicker">OIDC authentication</p>
+            <h2>Current signed-in user</h2>
           </div>
           <span class="badge" id="loginBadge">Signed out</span>
         </div>
         <div id="userPanel" class="empty-state">
-          Sign in to see the ID-token claims returned by Microsoft Entra ID.
+          Sign in with Entra ID to see the current authenticated identity.
         </div>
       </article>
 
-      <article class="card">
+      <article class="card main-card">
         <div class="card-heading">
           <div>
-            <p class="kicker">Automated lifecycle</p>
-            <h2>SCIM provisioning</h2>
+            <p class="kicker">SCIM provisioning</p>
+            <h2>Provisioned application users</h2>
           </div>
-          <button class="button ghost small" id="refreshUsers" type="button">Refresh</button>
+          <button class="button ghost small" id="refreshUsers" type="button">Refresh users</button>
         </div>
-        <p class="muted">Users assigned to the Entra Enterprise Application will appear here after provisioning.</p>
-        <div id="scimUsers" class="empty-state">Sign in first, then provision a user from Entra.</div>
+        <p class="muted">These users were synchronized from Entra through the SCIM 2.0 API. They are not login sessions.</p>
+        <div id="scimUsers" class="empty-state">Sign in to view provisioned users.</div>
       </article>
     </section>
 
-    <section class="card flow-card">
-      <p class="kicker">How the lab works</p>
-      <h2>Identity flow</h2>
-      <div class="flow">
-        <div class="flow-node"><span>1</span><strong>User</strong><small>opens this app</small></div>
-        <div class="arrow">→</div>
-        <div class="flow-node"><span>2</span><strong>Entra OIDC</strong><small>authenticates user</small></div>
-        <div class="arrow">→</div>
-        <div class="flow-node"><span>3</span><strong>App session</strong><small>reads ID-token claims</small></div>
+    <section class="card decision-card">
+      <div class="card-heading">
+        <div>
+          <p class="kicker">OIDC + SCIM together</p>
+          <h2>Demo access decision</h2>
+        </div>
+        <span class="decision-pill pending" id="decisionPill">Waiting</span>
       </div>
-      <div class="flow second-flow">
-        <div class="flow-node"><span>A</span><strong>Entra Provisioning</strong><small>assigned user</small></div>
-        <div class="arrow">→</div>
-        <div class="flow-node"><span>B</span><strong>SCIM API</strong><small>POST / PATCH / DELETE</small></div>
-        <div class="arrow">→</div>
-        <div class="flow-node"><span>C</span><strong>App user store</strong><small>lifecycle synchronized</small></div>
+
+      <div class="decision-grid">
+        <div class="decision-check" id="authCheck">
+          <span class="check-icon">?</span>
+          <div><strong>OIDC authenticated</strong><small>Has the user successfully signed in?</small></div>
+        </div>
+        <div class="decision-operator">+</div>
+        <div class="decision-check" id="provisionCheck">
+          <span class="check-icon">?</span>
+          <div><strong>SCIM active user</strong><small>Does an active provisioned account exist?</small></div>
+        </div>
+        <div class="decision-operator">=</div>
+        <div class="decision-result" id="decisionResult">
+          Sign in to evaluate access.
+        </div>
+      </div>
+
+      <p class="demo-note">This section demonstrates the access logic in the browser for the lab. In a production application, this authorization check should also be enforced on the server/API.</p>
+    </section>
+
+    <section class="card flow-card">
+      <p class="kicker">Two independent identity flows</p>
+      <h2>What happens behind the scenes</h2>
+
+      <div class="flow-block">
+        <div class="flow-label oidc-label">OIDC LOGIN</div>
+        <div class="flow">
+          <div class="flow-node"><span>1</span><strong>User opens app</strong><small>/auth/login</small></div>
+          <div class="arrow">→</div>
+          <div class="flow-node"><span>2</span><strong>Entra authenticates</strong><small>Authorization Code flow</small></div>
+          <div class="arrow">→</div>
+          <div class="flow-node"><span>3</span><strong>App session</strong><small>ID-token claims</small></div>
+        </div>
+      </div>
+
+      <div class="flow-block">
+        <div class="flow-label scim-label">SCIM LIFECYCLE</div>
+        <div class="flow">
+          <div class="flow-node"><span>A</span><strong>Group assignment</strong><small>User enters provisioning scope</small></div>
+          <div class="arrow">→</div>
+          <div class="flow-node"><span>B</span><strong>Entra SCIM service</strong><small>POST / PATCH / DELETE</small></div>
+          <div class="arrow">→</div>
+          <div class="flow-node"><span>C</span><strong>ScimUsers table</strong><small>Create / update / disable</small></div>
+        </div>
       </div>
     </section>
 
     <section class="card endpoint-card">
-      <p class="kicker">Configuration helper</p>
-      <h2>Endpoints to use in Entra</h2>
+      <p class="kicker">Lab configuration</p>
+      <h2>Entra integration endpoints</h2>
       <div class="endpoint-list">
         <div><span>OIDC Redirect URI</span><code id="redirectUri">Loading…</code></div>
         <div><span>SCIM Tenant URL</span><code id="scimBaseUrl">Loading…</code></div>
