@@ -115,7 +115,17 @@
         </div>
       </div>
 
-      <p class="demo-note">This section demonstrates the access logic in the browser for the lab. In a production application, this authorization check should also be enforced on the server/API.</p>
+      <p class="demo-note">This section demonstrates the access logic in the browser for the lab. The protected page below enforces the same check on the backend.</p>
+    </section>
+
+    <section class="card endpoint-card">
+      <p class="kicker">Server-side authorization test</p>
+      <h2>SCIM-only protected area</h2>
+      <p class="muted">This page is different from the dashboard. The Azure Function checks your OIDC session and then checks the ScimUsers table before returning the protected content.</p>
+      <div class="hero-actions" style="margin-top:18px">
+        <a class="button primary" href="/scim-only">Open SCIM-only protected page</a>
+        <a class="button ghost" href="/api/scim-only">Test protected API</a>
+      </div>
     </section>
 
     <section class="card flow-card">
