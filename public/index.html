@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Entra Identity Lab</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <main class="shell">
+    <header class="hero">
+      <div>
+        <p class="eyebrow">Microsoft Entra ID Lab</p>
+        <h1>OIDC + SCIM Identity Test App</h1>
+        <p class="subtitle">Sign in with Entra ID using OpenID Connect, then watch Entra provisioning create and manage users through SCIM 2.0.</p>
+      </div>
+      <div class="hero-actions" id="authActions">
+        <a class="button primary" href="/auth/login">Sign in with Entra ID</a>
+      </div>
+    </header>
+
+    <section class="status-grid">
+      <article class="card status-card">
+        <span class="status-dot" id="oidcDot"></span>
+        <div><strong>OIDC</strong><span id="oidcStatus">Checking…</span></div>
+      </article>
+      <article class="card status-card">
+        <span class="status-dot" id="scimDot"></span>
+        <div><strong>SCIM</strong><span id="scimStatus">Checking…</span></div>
+      </article>
+      <article class="card status-card">
+        <span class="status-dot neutral"></span>
+        <div><strong>App</strong><span>Online</span></div>
+      </article>
+    </section>
+
+    <section class="grid two-column">
+      <article class="card">
+        <div class="card-heading">
+          <div>
+            <p class="kicker">Interactive authentication</p>
+            <h2>OIDC session</h2>
+          </div>
+          <span class="badge" id="loginBadge">Signed out</span>
+        </div>
+        <div id="userPanel" class="empty-state">
+          Sign in to see the ID-token claims returned by Microsoft Entra ID.
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="card-heading">
+          <div>
+            <p class="kicker">Automated lifecycle</p>
+            <h2>SCIM provisioning</h2>
+          </div>
+          <button class="button ghost small" id="refreshUsers" type="button">Refresh</button>
+        </div>
+        <p class="muted">Users assigned to the Entra Enterprise Application will appear here after provisioning.</p>
+        <div id="scimUsers" class="empty-state">Sign in first, then provision a user from Entra.</div>
+      </article>
+    </section>
+
+    <section class="card flow-card">
+      <p class="kicker">How the lab works</p>
+      <h2>Identity flow</h2>
+      <div class="flow">
+        <div class="flow-node"><span>1</span><strong>User</strong><small>opens this app</small></div>
+        <div class="arrow">→</div>
+        <div class="flow-node"><span>2</span><strong>Entra OIDC</strong><small>authenticates user</small></div>
+        <div class="arrow">→</div>
+        <div class="flow-node"><span>3</span><strong>App session</strong><small>reads ID-token claims</small></div>
+      </div>
+      <div class="flow second-flow">
+        <div class="flow-node"><span>A</span><strong>Entra Provisioning</strong><small>assigned user</small></div>
+        <div class="arrow">→</div>
+        <div class="flow-node"><span>B</span><strong>SCIM API</strong><small>POST / PATCH / DELETE</small></div>
+        <div class="arrow">→</div>
+        <div class="flow-node"><span>C</span><strong>App user store</strong><small>lifecycle synchronized</small></div>
+      </div>
+    </section>
+
+    <section class="card endpoint-card">
+      <p class="kicker">Configuration helper</p>
+      <h2>Endpoints to use in Entra</h2>
+      <div class="endpoint-list">
+        <div><span>OIDC Redirect URI</span><code id="redirectUri">Loading…</code></div>
+        <div><span>SCIM Tenant URL</span><code id="scimBaseUrl">Loading…</code></div>
+        <div><span>Health check</span><code id="healthUrl">Loading…</code></div>
+      </div>
+    </section>
+  </main>
+
+  <script src="/app.js" defer></script>
+</body>
+</html>
