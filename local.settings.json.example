@@ -1,0 +1,13 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
+    "BASE_URL": "http://localhost:7071",
+    "ENTRA_TENANT_ID": "your-tenant-id",
+    "ENTRA_CLIENT_ID": "your-app-registration-client-id",
+    "ENTRA_CLIENT_SECRET": "your-app-registration-client-secret",
+    "SESSION_SECRET": "replace-with-a-long-random-session-secret",
+    "SCIM_BEARER_TOKEN": "replace-with-a-long-random-scim-token"
+  }
+}
