@@ -11,7 +11,7 @@ namespace EntraOidcScimLab.Functions;
 public sealed class WebFunctions(LabConfig config, LabStorage storage, CookieSigner signer, OidcService oidc)
 {
     [Function("Home")]
-    public Task<HttpResponseData> Home([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "")] HttpRequestData req)
+    public Task<HttpResponseData> Home([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "app")] HttpRequestData req)
         => StaticFile(req, "index.html", "text/html; charset=utf-8");
 
     [Function("Styles")]
@@ -117,7 +117,7 @@ public sealed class WebFunctions(LabConfig config, LabStorage storage, CookieSig
             await storage.SaveSessionAsync(session);
 
             var response = req.CreateResponse(HttpStatusCode.Redirect);
-            response.Headers.Add("Location", "/");
+            response.Headers.Add("Location", "/app");
             response.Headers.Add("Set-Cookie", $"lab_session={signer.Sign(session.RowKey)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=3600{SecureSuffix(baseUrl)}");
             return response;
         }
@@ -132,9 +132,10 @@ public sealed class WebFunctions(LabConfig config, LabStorage storage, CookieSig
     {
         if (signer.TryVerify(HttpHelpers.Cookie(req, "lab_session"), out var sessionId)) await storage.DeleteSessionAsync(sessionId);
         var baseUrl = HttpHelpers.BaseUrl(req, config);
+        var appUrl = $"{baseUrl}/app";
         var logout = string.IsNullOrWhiteSpace(config.TenantId)
-            ? baseUrl
-            : $"https://login.microsoftonline.com/{config.TenantId}/oauth2/v2.0/logout?post_logout_redirect_uri={Uri.EscapeDataString(baseUrl)}";
+            ? appUrl
+            : $"https://login.microsoftonline.com/{config.TenantId}/oauth2/v2.0/logout?post_logout_redirect_uri={Uri.EscapeDataString(appUrl)}";
         var response = req.CreateResponse(HttpStatusCode.Redirect);
         response.Headers.Add("Location", logout);
         response.Headers.Add("Set-Cookie", "lab_session=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0");
