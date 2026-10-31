@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Entra Identity Lab</title>
+  <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@4.25.0/lib/msal-browser.min.js"></script>
+  <style>
+    :root{--bg:#07111f;--panel:#0d1b2a;--panel2:#102238;--text:#eef6ff;--muted:#93a4b8;--line:#203653;--blue:#45a2ff;--green:#35d07f;--amber:#ffbd59;--red:#ff6b6b}
+    *{box-sizing:border-box} body{margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;background:linear-gradient(140deg,#06101c,#0a1a2f 55%,#07111f);color:var(--text);min-height:100vh}
+    .wrap{max-width:1180px;margin:auto;padding:28px}.top{display:flex;justify-content:space-between;align-items:center;gap:18px;margin-bottom:24px}.brand h1{margin:0;font-size:30px}.brand p{margin:7px 0 0;color:var(--muted)}
+    .badge{display:inline-flex;align-items:center;gap:8px;background:#0a2538;border:1px solid #1e4968;border-radius:999px;padding:8px 12px;color:#a9ddff;font-size:13px}.dot{width:8px;height:8px;border-radius:50%;background:var(--green)}
+    .grid{display:grid;grid-template-columns:repeat(12,1fr);gap:18px}.card{background:rgba(13,27,42,.93);border:1px solid var(--line);border-radius:16px;padding:20px;box-shadow:0 14px 35px rgba(0,0,0,.18)}
+    .span4{grid-column:span 4}.span5{grid-column:span 5}.span7{grid-column:span 7}.span8{grid-column:span 8}.span12{grid-column:span 12}
+    h2{font-size:18px;margin:0 0 14px}h3{font-size:15px;margin:18px 0 8px;color:#cfe7ff}.muted{color:var(--muted);font-size:14px;line-height:1.5}.status{font-size:26px;font-weight:700;margin:8px 0}.ok{color:var(--green)}.warn{color:var(--amber)}
+    label{display:block;color:#b9c9db;font-size:12px;margin:12px 0 6px}input,select{width:100%;background:#081522;border:1px solid #29435f;color:white;padding:11px 12px;border-radius:9px;outline:none}input:focus{border-color:var(--blue)}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:15px}button{border:0;border-radius:9px;padding:10px 14px;font-weight:700;cursor:pointer;background:var(--blue);color:#00162b}.secondary{background:#17324d;color:#dcecff;border:1px solid #2f5273}.danger{background:#3b1f28;color:#ffb9c3;border:1px solid #71303f}
+    pre{background:#050d16;border:1px solid #1c3148;color:#cce5ff;border-radius:10px;padding:14px;white-space:pre-wrap;word-break:break-word;max-height:320px;overflow:auto;font-size:12px}.user{display:grid;grid-template-columns:1.4fr 1.6fr .65fr auto;gap:10px;align-items:center;padding:11px 0;border-bottom:1px solid #18304a}.user:last-child{border:0}.pill{font-size:12px;border-radius:999px;padding:5px 8px;background:#17324d;color:#bfe0ff}.pill.active{background:#123a2c;color:#92f0be}
+    .flow{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:8px}.box{padding:12px 14px;border:1px solid #29496b;border-radius:10px;background:#0a1827;text-align:center;min-width:155px}.arrow{color:var(--blue);font-size:22px}.note{border-left:3px solid var(--amber);padding:10px 12px;background:#2b2415;color:#ffe2a6;border-radius:6px;margin-top:14px;font-size:13px;line-height:1.45}.small{font-size:12px;color:var(--muted)}a{color:#76bdff}
+    @media(max-width:850px){.span4,.span5,.span7,.span8{grid-column:span 12}.row{grid-template-columns:1fr}.top{align-items:flex-start;flex-direction:column}.user{grid-template-columns:1fr}.wrap{padding:18px}}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div class="brand"><h1>Entra Identity Lab</h1><p>GitHub-hosted test application for Microsoft Entra ID OIDC and SCIM concepts.</p></div>
+    <div class="badge"><span class="dot"></span> GitHub Pages</div>
+  </div>
+
+  <div class="grid">
+    <section class="card span4"><h2>OIDC Authentication</h2><div id="oidcStatus" class="status warn">Not configured</div><p class="muted">Interactive Entra ID sign-in using OAuth 2.0 / OpenID Connect with MSAL in the browser.</p><div class="actions"><button id="loginBtn">Sign in with Entra ID</button><button id="logoutBtn" class="secondary" style="display:none">Sign out</button></div></section>
+    <section class="card span4"><h2>Signed-in User</h2><div id="userName" class="status">Anonymous</div><p id="userMeta" class="muted">No Entra session is active.</p></section>
+    <section class="card span4"><h2>SCIM Provisioning</h2><div class="status warn">Simulator</div><p class="muted">Build and inspect SCIM 2.0 user payloads. Real Entra provisioning needs a server-side SCIM endpoint.</p></section>
+
+    <section class="card span5">
+      <h2>Entra OIDC Configuration</h2>
+      <p class="muted">Enter your Entra tenant and App Registration client ID. These values are saved only in this browser.</p>
+      <label>Tenant ID</label><input id="tenantId" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" />
+      <label>Application (client) ID</label><input id="clientId" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" />
+      <label>Redirect URI</label><input id="redirectUri" readonly />
+      <div class="actions"><button id="saveConfig">Save configuration</button><button id="clearConfig" class="secondary">Clear</button></div>
+      <div class="note"><b>Entra App Registration:</b> add the Redirect URI above under <b>Authentication → Single-page application</b>. No client secret is used by this GitHub Pages SPA.</div>
+    </section>
+
+    <section class="card span7">
+      <h2>OIDC Flow</h2>
+      <div class="flow"><div class="box">Browser<br><span class="small">GitHub Pages</span></div><div class="arrow">→</div><div class="box">Microsoft Entra ID<br><span class="small">/authorize</span></div><div class="arrow">→</div><div class="box">ID Token<br><span class="small">identity claims</span></div><div class="arrow">→</div><div class="box">This App<br><span class="small">MSAL session</span></div></div>
+      <h3>ID Token / Account Claims</h3><pre id="claims">Sign in to view Entra account and ID token claims.</pre>
+    </section>
+
+    <section class="card span5">
+      <h2>SCIM User Builder</h2>
+      <div class="row"><div><label>Given name</label><input id="givenName" placeholder="Rathna" /></div><div><label>Family name</label><input id="familyName" placeholder="Jayasundara" /></div></div>
+      <label>User name / UPN</label><input id="scimUserName" placeholder="user@contoso.com" />
+      <label>Display name</label><input id="displayName" placeholder="Rathna Jayasundara" />
+      <label>Email</label><input id="email" placeholder="user@contoso.com" />
+      <label>Account state</label><select id="active"><option value="true">Active</option><option value="false">Disabled</option></select>
+      <div class="actions"><button id="buildScim">Create SCIM user</button><button id="clearScim" class="secondary">Clear users</button></div>
+    </section>
+
+    <section class="card span7">
+      <h2>Generated SCIM 2.0 Request</h2>
+      <p class="muted">This shows the type of JSON Entra sends to a SCIM service when provisioning a user.</p>
+      <pre id="scimJson">No SCIM request generated yet.</pre>
+      <div class="note">GitHub Pages can host the UI and OIDC SPA, but it cannot receive Entra's server-to-server <code>POST /scim/v2/Users</code> calls. The real Node.js SCIM API remains in this repository for use on any server/runtime that can execute Node.js.</div>
+    </section>
+
+    <section class="card span12"><h2>SCIM Provisioned Users — Browser Lab</h2><div id="users"><p class="muted">No simulated users yet.</p></div></section>
+  </div>
+</div>
+<script>
+const $ = id => document.getElementById(id);
+const redirectUri = `${location.origin}${location.pathname}`;
+$('redirectUri').value = redirectUri;
+let msalInstance = null;
+let scimUsers = JSON.parse(localStorage.getItem('scimLabUsers') || '[]');
+
+function loadConfig(){
+  $('tenantId').value = localStorage.getItem('entraTenantId') || '';
+  $('clientId').value = localStorage.getItem('entraClientId') || '';
+  updateOidcStatus();
+}
+function updateOidcStatus(){
+  const ready = $('tenantId').value.trim() && $('clientId').value.trim();
+  $('oidcStatus').textContent = ready ? 'Configured' : 'Not configured';
+  $('oidcStatus').className = `status ${ready ? 'ok' : 'warn'}`;
+}
+function createMsal(){
+  const tenant = localStorage.getItem('entraTenantId');
+  const client = localStorage.getItem('entraClientId');
+  if(!tenant || !client) return null;
+  return new msal.PublicClientApplication({auth:{clientId:client,authority:`https://login.microsoftonline.com/${tenant}`,redirectUri},cache:{cacheLocation:'localStorage'}});
+}
+async function initAuth(){
+  msalInstance = createMsal();
+  if(!msalInstance) return;
+  await msalInstance.initialize();
+  const result = await msalInstance.handleRedirectPromise();
+  if(result?.account) msalInstance.setActiveAccount(result.account);
+  const account = msalInstance.getActiveAccount() || msalInstance.getAllAccounts()[0];
+  if(account){
+    msalInstance.setActiveAccount(account);
+    $('userName').textContent = account.name || account.username || 'Signed in';
+    $('userMeta').textContent = account.username || '';
+    $('loginBtn').style.display='none'; $('logoutBtn').style.display='inline-block';
+    $('claims').textContent = JSON.stringify({account:{name:account.name,username:account.username,tenantId:account.tenantId,homeAccountId:account.homeAccountId,localAccountId:account.localAccountId},idTokenClaims:account.idTokenClaims},null,2);
+  }
+}
+$('saveConfig').onclick = async () => {
+  localStorage.setItem('entraTenantId',$('tenantId').value.trim());
+  localStorage.setItem('entraClientId',$('clientId').value.trim());
+  updateOidcStatus();
+  msalInstance=createMsal(); if(msalInstance) await msalInstance.initialize();
+};
+$('clearConfig').onclick=()=>{localStorage.removeItem('entraTenantId');localStorage.removeItem('entraClientId');$('tenantId').value='';$('clientId').value='';updateOidcStatus();};
+$('loginBtn').onclick=async()=>{if(!msalInstance){alert('Save your Tenant ID and Client ID first.');return;} await msalInstance.loginRedirect({scopes:['openid','profile','email']});};
+$('logoutBtn').onclick=async()=>{if(msalInstance) await msalInstance.logoutRedirect({postLogoutRedirectUri:redirectUri});};
+
+function renderUsers(){
+  if(!scimUsers.length){$('users').innerHTML='<p class="muted">No simulated users yet.</p>';return;}
+  $('users').innerHTML=scimUsers.map(u=>`<div class="user"><div><b>${escapeHtml(u.displayName||u.userName)}</b><div class="small">${escapeHtml(u.id)}</div></div><div>${escapeHtml(u.userName)}</div><div><span class="pill ${u.active?'active':''}">${u.active?'Active':'Disabled'}</span></div><button class="danger" onclick="removeUser('${u.id}')">Delete</button></div>`).join('');
+}
+function escapeHtml(v=''){return String(v).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));}
+window.removeUser=id=>{scimUsers=scimUsers.filter(u=>u.id!==id);localStorage.setItem('scimLabUsers',JSON.stringify(scimUsers));renderUsers();};
+$('buildScim').onclick=()=>{
+  const user={schemas:['urn:ietf:params:scim:schemas:core:2.0:User'],id:crypto.randomUUID(),userName:$('scimUserName').value.trim(),active:$('active').value==='true',name:{givenName:$('givenName').value.trim(),familyName:$('familyName').value.trim()},displayName:$('displayName').value.trim(),emails:[{value:$('email').value.trim(),type:'work',primary:true}],meta:{resourceType:'User',created:new Date().toISOString()}};
+  if(!user.userName){alert('Enter a user name / UPN.');return;}
+  scimUsers.push(user);localStorage.setItem('scimLabUsers',JSON.stringify(scimUsers));$('scimJson').textContent=`POST /scim/v2/Users\nContent-Type: application/scim+json\nAuthorization: Bearer <token>\n\n${JSON.stringify(user,null,2)}`;renderUsers();
+};
+$('clearScim').onclick=()=>{scimUsers=[];localStorage.removeItem('scimLabUsers');$('scimJson').textContent='No SCIM request generated yet.';renderUsers();};
+loadConfig();renderUsers();initAuth().catch(err=>{$('claims').textContent=`OIDC error:\n${err.message}`;console.error(err);});
+</script>
+</body>
+</html>
