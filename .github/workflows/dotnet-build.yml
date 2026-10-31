@@ -1,0 +1,20 @@
+name: .NET Functions build
+
+on:
+  push:
+    branches:
+      - dotnet-functions
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Restore
+        run: dotnet restore EntraOidcScimLab.csproj
+      - name: Build
+        run: dotnet build EntraOidcScimLab.csproj --configuration Release --no-restore
